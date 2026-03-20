@@ -1,0 +1,103 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Supplier {
+  id             String          @id @default(uuid())
+  name           String
+  contactName    String?
+  email          String?
+  phone          String?
+  paymentTerms   String          @default("NET_30")
+  notes          String?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  purchaseOrders PurchaseOrder[]
+}
+
+model Material {
+  id           String                 @id @default(uuid())
+  code         String                 @unique
+  name         String
+  description  String?
+  unit         String                 @default("UNIT")
+  currentPrice Float
+  isActive     Boolean                @default(true)
+  createdAt    DateTime               @default(now())
+  updatedAt    DateTime               @updatedAt
+  priceHistory MaterialPriceHistory[]
+  orderLines   PurchaseOrderLine[]
+}
+
+model MaterialPriceHistory {
+  id         String   @id @default(uuid())
+  materialId String
+  price      Float
+  note       String?
+  createdAt  DateTime @default(now())
+  material   Material @relation(fields: [materialId], references: [id], onDelete: Cascade)
+}
+
+model PurchaseOrder {
+  id          String              @id @default(uuid())
+  poNumber    String              @unique
+  supplierId  String
+  status      String              @default("DRAFT")
+  totalAmount Float               @default(0)
+  notes       String?
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+  supplier    Supplier            @relation(fields: [supplierId], references: [id])
+  lines       PurchaseOrderLine[]
+  invoices    Invoice[]
+}
+
+model PurchaseOrderLine {
+  id              String        @id @default(uuid())
+  purchaseOrderId String
+  materialId      String
+  quantity        Float
+  unitPrice       Float
+  totalPrice      Float
+  notes           String?
+  purchaseOrder   PurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
+  material        Material      @relation(fields: [materialId], references: [id])
+}
+
+model Invoice {
+  id              String           @id @default(uuid())
+  invoiceNumber   String           @unique
+  purchaseOrderId String?
+  supplierId      String?
+  amount          Float
+  paidAmount      Float            @default(0)
+  status          String           @default("PENDING")
+  paymentType     String           @default("CREDIT")
+  dueDate         DateTime?
+  notes           String?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  purchaseOrder   PurchaseOrder?   @relation(fields: [purchaseOrderId], references: [id])
+  payments        InvoicePayment[]
+}
+
+model InvoicePayment {
+  id           String    @id @default(uuid())
+  invoiceId    String
+  amount       Float
+  paymentType  String
+  chequeDate   DateTime?
+  maturityDate DateTime?
+  chequeNumber String?
+  bankName     String?
+  isPaid       Boolean   @default(false)
+  paidAt       DateTime?
+  notes        String?
+  createdAt    DateTime  @default(now())
+  invoice      Invoice   @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+}
