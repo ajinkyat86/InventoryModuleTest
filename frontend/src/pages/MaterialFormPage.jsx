@@ -73,7 +73,7 @@ export default function MaterialFormPage() {
     },
     onError: (err) => {
       toast.error(
-        err.response?.data?.message || 'Could not save material. Try again.'
+        err.response?.data?.error || err.response?.data?.message || 'Could not save material. Try again.'
       )
     },
   })

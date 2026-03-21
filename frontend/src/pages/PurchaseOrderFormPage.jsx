@@ -45,7 +45,7 @@ export default function PurchaseOrderFormPage() {
     },
     onError: (err) => {
       toast.error(
-        err.response?.data?.message || 'Could not create purchase order. Try again.'
+        err.response?.data?.error || err.response?.data?.message || 'Could not create purchase order. Try again.'
       )
     },
   })

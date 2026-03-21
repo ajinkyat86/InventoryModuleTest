@@ -32,7 +32,7 @@ function RecordPaymentModal({ invoiceId, onClose }) {
       onClose()
     },
     onError: (err) => {
-      toast.error(err.response?.data?.message || 'Could not record payment. Try again.')
+      toast.error(err.response?.data?.error || err.response?.data?.message || 'Could not record payment. Try again.')
     },
   })
 

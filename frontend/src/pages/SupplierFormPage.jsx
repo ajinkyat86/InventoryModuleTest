@@ -62,7 +62,7 @@ export default function SupplierFormPage() {
     },
     onError: (err) => {
       toast.error(
-        err.response?.data?.message || 'Could not save supplier. Try again.'
+        err.response?.data?.error || err.response?.data?.message || 'Could not save supplier. Try again.'
       )
     },
   })

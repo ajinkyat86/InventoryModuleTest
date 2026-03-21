@@ -63,7 +63,7 @@ export default function InvoiceFormPage() {
     },
     onError: (err) => {
       toast.error(
-        err.response?.data?.message || 'Could not create invoice. Try again.'
+        err.response?.data?.error || err.response?.data?.message || 'Could not create invoice. Try again.'
       )
     },
   })
