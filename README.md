@@ -13,9 +13,10 @@ A procurement and inventory visibility tool for MENA businesses. Replaces Excel-
 ```bash
 cd backend
 npm install
+cp .env.example .env   # creates your env file — do this first!
 npx prisma db push
-node src/seed.js     # loads demo data
-npm run dev          # starts on port 3001
+node src/seed.js       # loads demo data
+npm run dev            # starts on port 3001
 ```
 
 ### Frontend
