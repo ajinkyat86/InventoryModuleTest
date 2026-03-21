@@ -13,7 +13,13 @@ client.interceptors.request.use((config) => {
 })
 
 client.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    // Unwrap backend's { data: ... } envelope so callers get the payload directly
+    if (response.data && typeof response.data === 'object' && 'data' in response.data) {
+      response.data = response.data.data
+    }
+    return response
+  },
   (error) => {
     if (error.response?.status === 401) {
       localStorage.removeItem('token')
