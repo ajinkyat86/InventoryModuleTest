@@ -77,15 +77,21 @@ export default function DashboardPage() {
   }
 
   const {
-    committedSpend = 0,
+    summary = {},
+    spendByMonth = [],
+    pdcsDue = [],
+    recentPOs = [],
+    priceAlerts = [],
+  } = data || {}
+
+  const {
+    totalCommittedSpend: committedSpend = 0,
     pendingApprovals = 0,
     outstandingPayables = 0,
     overdueInvoices = 0,
-    spendByMonth = [],
-    pdcsDue = [],
-    recentPurchaseOrders = [],
-    priceAlerts = [],
-  } = data || {}
+  } = summary
+
+  const recentPurchaseOrders = recentPOs
 
   return (
     <motion.div

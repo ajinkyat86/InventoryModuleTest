@@ -24,6 +24,7 @@ export default function LoginPage() {
       navigate('/dashboard', { replace: true })
     } catch (err) {
       setError(
+        err.response?.data?.error ||
         err.response?.data?.message ||
         'Sign in failed. Check your credentials and try again.'
       )
