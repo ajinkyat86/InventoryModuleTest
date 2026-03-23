@@ -104,7 +104,7 @@ export default function PurchaseOrderFormPage() {
       supplierId,
       notes,
       status: 'DRAFT',
-      lineItems: lineItems.map(({ materialId, quantity, unitPrice }) => ({
+      lines: lineItems.map(({ materialId, quantity, unitPrice }) => ({
         materialId,
         quantity: Number(quantity),
         unitPrice: Number(unitPrice),
