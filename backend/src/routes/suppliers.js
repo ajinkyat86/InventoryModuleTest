@@ -1,5 +1,6 @@
 import express from 'express';
 import prisma from '../prisma.js';
+import { computeSpendByMonth, computeOutstanding } from '../lib/aggregates.js';
 
 const router = express.Router();
 
@@ -83,6 +84,113 @@ router.get('/:id', async (req, res) => {
   } catch (err) {
     console.error(err);
     return res.status(500).json({ error: 'Failed to fetch supplier' });
+  }
+});
+
+// GET /:id/report — full financial profile for a supplier
+router.get('/:id/report', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const supplier = await prisma.supplier.findUnique({ where: { id } });
+    if (!supplier) return res.status(404).json({ error: 'Supplier not found' });
+
+    const now = new Date();
+    const ninetyDaysFromNow = new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000);
+    const twelveMonthsAgo = new Date(now.getFullYear() - 1, now.getMonth(), 1);
+
+    const approvedPOs = await prisma.purchaseOrder.findMany({
+      where: { supplierId: id, status: 'APPROVED' },
+      select: { id: true, poNumber: true, totalAmount: true, createdAt: true, status: true },
+    });
+
+    const totalCommittedSpend = approvedPOs.reduce((sum, po) => sum + po.totalAmount, 0);
+    const spendByMonth = computeSpendByMonth(
+      approvedPOs.filter((po) => new Date(po.createdAt) >= twelveMonthsAgo),
+      'createdAt',
+      'totalAmount'
+    );
+
+    const invoices = await prisma.invoice.findMany({
+      where: {
+        OR: [{ supplierId: id }, { purchaseOrder: { supplierId: id } }],
+      },
+      select: { id: true, amount: true, paidAmount: true, status: true, invoiceNumber: true, dueDate: true, createdAt: true },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    const totalInvoiced = invoices.reduce((sum, inv) => sum + inv.amount, 0);
+    const totalPaid = invoices.reduce((sum, inv) => sum + (inv.paidAmount || 0), 0);
+    const outstandingPayables = computeOutstanding(invoices);
+    const recentInvoices = invoices.slice(0, 10).map((inv) => ({
+      invoiceNumber: inv.invoiceNumber,
+      status: inv.status,
+      amount: inv.amount,
+      dueDate: inv.dueDate,
+    }));
+
+    const invoiceIds = invoices.map((inv) => inv.id);
+    const upcomingPDCs = await prisma.invoicePayment.findMany({
+      where: {
+        invoiceId: { in: invoiceIds },
+        paymentType: 'PDC',
+        isPaid: false,
+        OR: [
+          { maturityDate: { lte: ninetyDaysFromNow } },
+          { maturityDate: null },
+        ],
+      },
+      select: { amount: true, chequeNumber: true, maturityDate: true, isPaid: true },
+      orderBy: [{ maturityDate: 'asc' }],
+    });
+
+    const recentPOs = await prisma.purchaseOrder.findMany({
+      where: { supplierId: id },
+      select: { id: true, poNumber: true, status: true, totalAmount: true, createdAt: true },
+      orderBy: { createdAt: 'desc' },
+      take: 10,
+    });
+
+    const materialGroups = await prisma.purchaseOrderLine.groupBy({
+      by: ['materialId'],
+      where: { purchaseOrder: { supplierId: id, status: 'APPROVED' } },
+      _sum: { totalPrice: true, quantity: true, qtyReceived: true },
+      orderBy: { _sum: { totalPrice: 'desc' } },
+      take: 5,
+    });
+
+    const materialIds = materialGroups.map((g) => g.materialId);
+    const materials = materialIds.length > 0 ? await prisma.material.findMany({
+      where: { id: { in: materialIds } },
+      select: { id: true, name: true, unit: true },
+    }) : [];
+    const materialMap = Object.fromEntries(materials.map((m) => [m.id, m]));
+
+    const topMaterials = materialGroups.map((g) => ({
+      materialId: g.materialId,
+      name: materialMap[g.materialId]?.name || 'Unknown',
+      unit: materialMap[g.materialId]?.unit || '',
+      totalSpend: g._sum.totalPrice || 0,
+      totalOrdered: g._sum.quantity || 0,
+      totalReceived: g._sum.qtyReceived || 0,
+    }));
+
+    return res.json({
+      data: {
+        supplier,
+        totalCommittedSpend,
+        totalInvoiced,
+        totalPaid,
+        outstandingPayables,
+        spendByMonth,
+        upcomingPDCs,
+        recentPOs,
+        recentInvoices,
+        topMaterials,
+      },
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: 'Failed to fetch supplier report' });
   }
 });
 

@@ -1,10 +1,12 @@
 import React from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
 import {
   LineChart,
   Line,
+  BarChart,
+  Bar,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -197,6 +199,60 @@ export default function MaterialDetailPage() {
                   })}
               </tbody>
             </table>
+          </div>
+        )}
+      </div>
+      {/* Procurement Summary */}
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 space-y-6">
+        <h2 className="text-base font-semibold text-gray-800">Procurement Summary</h2>
+
+        {/* KPI cards */}
+        <div className="grid grid-cols-3 gap-4">
+          {[
+            { label: 'Total Ordered', value: `${material.totalOrdered || 0} ${material.unit || ''}` },
+            { label: 'Total Received', value: `${material.totalReceived || 0} ${material.unit || ''}` },
+            { label: 'Total Spend', value: `AED ${(material.totalSpend || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}` },
+          ].map(kpi => (
+            <div key={kpi.label} className="bg-gray-50 rounded-lg p-4">
+              <p className="text-xs text-gray-500 uppercase tracking-wide">{kpi.label}</p>
+              <p className="text-lg font-bold text-gray-900 mt-1">{kpi.value}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* Top suppliers */}
+        {material.topSuppliers?.length > 0 && (
+          <div>
+            <h3 className="text-sm font-semibold text-gray-700 mb-2">Top Suppliers</h3>
+            <table className="w-full text-sm">
+              <thead><tr className="text-left text-gray-500 border-b">
+                <th className="pb-2">Supplier</th><th className="pb-2 text-right">Spend</th>
+              </tr></thead>
+              <tbody>
+                {material.topSuppliers.map(s => (
+                  <tr key={s.id} className="border-b border-gray-50">
+                    <td className="py-2"><Link to={`/suppliers/${s.id}`} className="text-blue-600 hover:underline">{s.name}</Link></td>
+                    <td className="py-2 text-right font-medium">AED {s.spend.toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* Spend by month */}
+        {material.spendByMonth?.length > 0 && (
+          <div>
+            <h3 className="text-sm font-semibold text-gray-700 mb-2">Spend by Month</h3>
+            <ResponsiveContainer width="100%" height={200}>
+              <BarChart data={material.spendByMonth}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                <XAxis dataKey="month" tick={{ fontSize: 11 }} />
+                <YAxis tick={{ fontSize: 11 }} tickFormatter={v => `${(v/1000).toFixed(0)}k`} />
+                <Tooltip formatter={v => [`AED ${v.toLocaleString()}`, 'Spend']} />
+                <Bar dataKey="total" fill="#6366f1" radius={[3,3,0,0]} />
+              </BarChart>
+            </ResponsiveContainer>
           </div>
         )}
       </div>

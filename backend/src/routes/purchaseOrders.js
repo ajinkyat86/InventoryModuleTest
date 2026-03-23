@@ -269,4 +269,37 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
+// PATCH /:id/lines/:lineId — delivery confirmation
+router.patch('/:id/lines/:lineId', async (req, res) => {
+  try {
+    const { id, lineId } = req.params;
+    const { qtyReceived } = req.body;
+
+    if (qtyReceived === undefined || qtyReceived === null) {
+      return res.status(400).json({ error: 'qtyReceived is required' });
+    }
+    if (typeof qtyReceived !== 'number' || qtyReceived < 0) {
+      return res.status(400).json({ error: 'qtyReceived must be a non-negative number' });
+    }
+
+    const line = await prisma.purchaseOrderLine.findFirst({
+      where: { id: lineId, purchaseOrderId: id },
+    });
+    if (!line) return res.status(404).json({ error: 'Line not found' });
+
+    if (qtyReceived > line.quantity) {
+      return res.status(400).json({ error: `Qty received (${qtyReceived}) cannot exceed qty ordered (${line.quantity})` });
+    }
+
+    const updated = await prisma.purchaseOrderLine.update({
+      where: { id: lineId },
+      data: { qtyReceived },
+    });
+    return res.json({ data: updated });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: 'Failed to update delivery' });
+  }
+});
+
 export default router;

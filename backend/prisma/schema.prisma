@@ -65,6 +65,7 @@ model PurchaseOrderLine {
   unitPrice       Float
   totalPrice      Float
   notes           String?
+  qtyReceived     Float?        // null = delivery not confirmed
   purchaseOrder   PurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
   material        Material      @relation(fields: [materialId], references: [id])
 }

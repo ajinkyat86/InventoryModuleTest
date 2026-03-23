@@ -6,6 +6,7 @@ import LoginPage from './pages/LoginPage'
 import DashboardPage from './pages/DashboardPage'
 import SuppliersPage from './pages/SuppliersPage'
 import SupplierFormPage from './pages/SupplierFormPage'
+import SupplierDetailPage from './pages/SupplierDetailPage'
 import MaterialsPage from './pages/MaterialsPage'
 import MaterialDetailPage from './pages/MaterialDetailPage'
 import MaterialFormPage from './pages/MaterialFormPage'
@@ -46,6 +47,10 @@ export default function App() {
       <Route
         path="/suppliers/:id/edit"
         element={<ProtectedRoute><SupplierFormPage /></ProtectedRoute>}
+      />
+      <Route
+        path="/suppliers/:id"
+        element={<ProtectedRoute><SupplierDetailPage /></ProtectedRoute>}
       />
 
       <Route

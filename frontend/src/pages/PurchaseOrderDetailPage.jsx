@@ -9,6 +9,56 @@ import { formatCurrency, formatDate } from '../utils/format'
 import PageHeader from '../components/ui/PageHeader'
 import StatusBadge from '../components/ui/StatusBadge'
 import ConfirmDialog from '../components/ui/ConfirmDialog'
+import api from '../api/client'
+
+function DeliveryLineRow({ poId, line, onSaved }) {
+  const [qty, setQty] = React.useState(line.qtyReceived ?? line.quantity)
+  const [saving, setSaving] = React.useState(false)
+  const [msg, setMsg] = React.useState(null)
+
+  const handleSave = async () => {
+    setSaving(true)
+    setMsg(null)
+    try {
+      await api.patch(`/purchase-orders/${poId}/lines/${line.id}`, { qtyReceived: Number(qty) })
+      setMsg({ type: 'success', text: 'Saved' })
+      if (onSaved) onSaved()
+    } catch (err) {
+      setMsg({ type: 'error', text: err.response?.data?.error || 'Failed to save' })
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <tr className="border-b border-gray-50">
+      <td className="py-2 font-medium">{line.material?.name || '—'}</td>
+      <td className="py-2 text-gray-500">{line.quantity} {line.material?.unit || ''}</td>
+      <td className="py-2">
+        <input
+          type="number"
+          min={0}
+          max={line.quantity}
+          value={qty}
+          onChange={e => setQty(e.target.value)}
+          className="w-24 border border-gray-300 rounded px-2 py-1 text-sm"
+        />
+      </td>
+      <td className="py-2">
+        <button
+          onClick={handleSave}
+          disabled={saving}
+          className="px-3 py-1 bg-blue-600 text-white rounded text-xs font-medium hover:bg-blue-700 disabled:opacity-50"
+        >
+          {saving ? 'Saving...' : 'Save'}
+        </button>
+        {msg && (
+          <span className={`ml-2 text-xs ${msg.type === 'success' ? 'text-green-600' : 'text-red-500'}`}>{msg.text}</span>
+        )}
+      </td>
+    </tr>
+  )
+}
 
 export default function PurchaseOrderDetailPage() {
   const { id } = useParams()
@@ -199,6 +249,29 @@ export default function PurchaseOrderDetailPage() {
           </div>
         )}
       </div>
+
+      {/* Confirm Delivery */}
+      {po.status === 'APPROVED' && po.lines?.length > 0 && (
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+          <h2 className="text-base font-semibold text-gray-800 mb-1">Confirm Delivery</h2>
+          <p className="text-sm text-gray-500 mb-4">Enter quantities received when goods arrive on site.</p>
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-left text-gray-500 border-b">
+                <th className="pb-2">Material</th>
+                <th className="pb-2">Qty Ordered</th>
+                <th className="pb-2">Qty Received</th>
+                <th className="pb-2">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {po.lines.map(line => (
+                <DeliveryLineRow key={line.id} poId={po.id} line={line} />
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       {/* Linked invoices */}
       {po.invoices && po.invoices.length > 0 && (

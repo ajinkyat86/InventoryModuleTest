@@ -103,6 +103,9 @@ export default function SuppliersPage() {
                     </td>
                     <td className="common-table-cell">
                       <div className="flex items-center gap-2">
+                        <Link to={`/suppliers/${supplier.id}`} className="text-blue-600 hover:underline text-sm font-medium">
+                          View Report
+                        </Link>
                         <button
                           onClick={() => navigate(`/suppliers/${supplier.id}/edit`)}
                           className="p-1.5 text-gray-500 hover:text-primary-green hover:bg-secondary-green rounded transition-colors"

@@ -1,5 +1,6 @@
 import express from 'express';
 import prisma from '../prisma.js';
+import { computeSpendByMonth } from '../lib/aggregates.js';
 
 const router = express.Router();
 
@@ -118,7 +119,41 @@ router.get('/:id', async (req, res) => {
 
     const { avgPrice90d, changePercent } = computePriceChange(material.currentPrice, material.priceHistory);
 
-    return res.json({ data: { ...material, avgPrice90d, changePercent } });
+    // Spend aggregates
+    const lineGroups = await prisma.purchaseOrderLine.groupBy({
+      by: ['purchaseOrderId'],
+      where: { materialId: id, purchaseOrder: { status: 'APPROVED' } },
+      _sum: { totalPrice: true, quantity: true, qtyReceived: true },
+    });
+
+    const poIds = lineGroups.map((g) => g.purchaseOrderId);
+    const relatedPOs = poIds.length > 0 ? await prisma.purchaseOrder.findMany({
+      where: { id: { in: poIds } },
+      select: { id: true, supplierId: true, supplier: { select: { id: true, name: true } }, createdAt: true },
+    }) : [];
+
+    const totalOrdered = lineGroups.reduce((s, g) => s + (g._sum.quantity || 0), 0);
+    const totalReceived = lineGroups.reduce((s, g) => s + (g._sum.qtyReceived || 0), 0);
+    const totalSpend = lineGroups.reduce((s, g) => s + (g._sum.totalPrice || 0), 0);
+
+    const supplierSpendMap = {};
+    for (const po of relatedPOs) {
+      if (!po.supplier) continue;
+      supplierSpendMap[po.supplierId] = supplierSpendMap[po.supplierId] || { id: po.supplierId, name: po.supplier.name, spend: 0 };
+      const grp = lineGroups.find((g) => g.purchaseOrderId === po.id);
+      supplierSpendMap[po.supplierId].spend += grp?._sum.totalPrice || 0;
+    }
+    const topSuppliers = Object.values(supplierSpendMap).sort((a, b) => b.spend - a.spend).slice(0, 3);
+
+    const twelveMonthsAgo = new Date();
+    twelveMonthsAgo.setFullYear(twelveMonthsAgo.getFullYear() - 1);
+    const spendByMonth = computeSpendByMonth(
+      relatedPOs.filter((po) => new Date(po.createdAt) >= twelveMonthsAgo),
+      'createdAt',
+      'totalAmount'
+    );
+
+    return res.json({ data: { ...material, avgPrice90d, changePercent, totalOrdered, totalReceived, totalSpend, topSuppliers, spendByMonth } });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ error: 'Failed to fetch material' });
