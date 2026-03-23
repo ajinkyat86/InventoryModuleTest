@@ -7,23 +7,18 @@ import { getMaterial, createMaterial, updateMaterial } from '../api/materials'
 import PageHeader from '../components/ui/PageHeader'
 
 const UNITS = [
-  { value: 'kg', label: 'Kilogram (kg)' },
-  { value: 'g', label: 'Gram (g)' },
-  { value: 'ton', label: 'Metric ton' },
-  { value: 'liter', label: 'Liter (L)' },
-  { value: 'unit', label: 'Unit / piece' },
-  { value: 'box', label: 'Box' },
-  { value: 'roll', label: 'Roll' },
-  { value: 'sqm', label: 'Square meter (m²)' },
-  { value: 'lm', label: 'Linear meter (lm)' },
-  { value: 'set', label: 'Set' },
+  { value: 'UNIT', label: 'Unit / piece' },
+  { value: 'KG', label: 'Kilogram (kg)' },
+  { value: 'LITRE', label: 'Litre (L)' },
+  { value: 'METRE', label: 'Metre (m)' },
+  { value: 'BOX', label: 'Box' },
 ]
 
 const emptyForm = {
   code: '',
   name: '',
   description: '',
-  unit: 'unit',
+  unit: 'UNIT',
   currentPrice: '',
   isActive: true,
 }
@@ -50,7 +45,7 @@ export default function MaterialFormPage() {
         code: material.code || '',
         name: material.name || '',
         description: material.description || '',
-        unit: material.unit || 'unit',
+        unit: material.unit || 'UNIT',
         currentPrice: material.currentPrice?.toString() || '',
         isActive: material.isActive !== false,
       })
