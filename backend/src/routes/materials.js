@@ -129,7 +129,7 @@ router.get('/:id', async (req, res) => {
     const poIds = lineGroups.map((g) => g.purchaseOrderId);
     const relatedPOs = poIds.length > 0 ? await prisma.purchaseOrder.findMany({
       where: { id: { in: poIds } },
-      select: { id: true, supplierId: true, supplier: { select: { id: true, name: true } }, createdAt: true },
+      select: { id: true, supplierId: true, supplier: { select: { id: true, name: true } }, createdAt: true, totalAmount: true },
     }) : [];
 
     const totalOrdered = lineGroups.reduce((s, g) => s + (g._sum.quantity || 0), 0);

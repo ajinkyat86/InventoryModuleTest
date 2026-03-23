@@ -266,7 +266,12 @@ export default function PurchaseOrderDetailPage() {
             </thead>
             <tbody>
               {po.lines.map(line => (
-                <DeliveryLineRow key={line.id} poId={po.id} line={line} />
+                <DeliveryLineRow
+                  key={line.id}
+                  poId={po.id}
+                  line={line}
+                  onSaved={() => queryClient.invalidateQueries({ queryKey: ['purchase-order', id] })}
+                />
               ))}
             </tbody>
           </table>

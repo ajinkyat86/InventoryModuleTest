@@ -41,7 +41,7 @@ export default function SupplierDetailPage() {
           <Link to="/suppliers" className="text-sm text-blue-600 hover:underline mb-1 block">← Suppliers</Link>
           <h1 className="text-2xl font-bold text-gray-900">{supplier.name}</h1>
           <p className="text-gray-500 text-sm mt-1">
-            {supplier.contactPerson && <span>{supplier.contactPerson} · </span>}
+            {supplier.contactName && <span>{supplier.contactName} · </span>}
             {supplier.email && <span>{supplier.email} · </span>}
             {supplier.paymentTerms && <span>Payment terms: {supplier.paymentTerms} days</span>}
           </p>

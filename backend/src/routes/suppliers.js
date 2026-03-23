@@ -129,7 +129,7 @@ router.get('/:id/report', async (req, res) => {
     }));
 
     const invoiceIds = invoices.map((inv) => inv.id);
-    const upcomingPDCs = await prisma.invoicePayment.findMany({
+    const upcomingPDCs = invoiceIds.length > 0 ? await prisma.invoicePayment.findMany({
       where: {
         invoiceId: { in: invoiceIds },
         paymentType: 'PDC',
@@ -141,7 +141,7 @@ router.get('/:id/report', async (req, res) => {
       },
       select: { amount: true, chequeNumber: true, maturityDate: true, isPaid: true },
       orderBy: [{ maturityDate: 'asc' }],
-    });
+    }) : [];
 
     const recentPOs = await prisma.purchaseOrder.findMany({
       where: { supplierId: id },
