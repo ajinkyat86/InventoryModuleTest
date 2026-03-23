@@ -122,7 +122,7 @@ router.get('/:id', async (req, res) => {
     // Spend aggregates
     const lineGroups = await prisma.purchaseOrderLine.groupBy({
       by: ['purchaseOrderId'],
-      where: { materialId: id, purchaseOrder: { status: 'APPROVED' } },
+      where: { materialId: req.params.id, purchaseOrder: { status: 'APPROVED' } },
       _sum: { totalPrice: true, quantity: true, qtyReceived: true },
     });
 

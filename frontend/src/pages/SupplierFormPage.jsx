@@ -121,6 +121,8 @@ export default function SupplierFormPage() {
             </label>
             <input
               type="text"
+              name="name"
+              id="name"
               value={form.name}
               onChange={(e) => setField('name', e.target.value)}
               className={`input-field ${errors.name ? 'border-red-400' : ''}`}
